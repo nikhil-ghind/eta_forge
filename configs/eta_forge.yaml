@@ -1,0 +1,127 @@
+# ETA Forge — default configuration.
+#
+# Layering: this file < ETA_FORGE_* environment variables < --set section.key=value.
+# Every key here maps onto a typed dataclass field in eta_forge/config.py; an unknown
+# key is an error at load time, not a silent no-op.
+
+database:
+  host: localhost
+  port: 5432
+  database: eta_forge
+  user: eta
+  password: ""            # prefer ETA_FORGE_DATABASE__PASSWORD or PGPASSWORD
+  sslmode: prefer
+  min_pool_size: 1
+  max_pool_size: 10
+  connect_timeout_s: 5.0
+  statement_timeout_ms: 10000
+  application_name: eta_forge
+
+graph:
+  edge_table: road_segment
+  vertex_table: road_segment_vertices_pgr
+  attr_table: segment_attr
+  srid: 4326
+  snap_radius_m: 300.0
+  snap_candidates: 10
+  max_route_distance_m: 120000.0
+  # Free-flow priors, used only where mining produced no usable cell.
+  default_speed_kph:
+    motorway: 90.0
+    trunk: 70.0
+    primary: 50.0
+    secondary: 45.0
+    tertiary: 40.0
+    residential: 30.0
+    service: 20.0
+    unclassified: 30.0
+  # A left turn across oncoming traffic is the single most under-modelled cost in a
+  # naive router; these are seconds added per manoeuvre.
+  turn_penalty_s:
+    straight: 0.0
+    slight_left: 1.5
+    slight_right: 1.0
+    left: 12.0
+    right: 5.0
+    sharp_left: 16.0
+    sharp_right: 9.0
+    uturn: 25.0
+  signal_penalty_s: 8.0
+  fallback_detour_factor: 1.32
+  fallback_speed_kph: 24.0
+
+profiles:
+  tod_buckets: 24          # must divide 24
+  dow_buckets: 7
+  timezone: America/New_York
+  min_samples_per_cell: 5
+  shrink_k_segment: 20.0
+  shrink_k_class_tod: 40.0
+  shrink_k_global: 80.0
+  min_speed_kph: 1.0
+  max_speed_kph: 130.0
+  profile_table: segment_speed_profile
+  smoothed_table: segment_speed_profile_smoothed
+  max_profile_age_days: 90
+
+features:
+  h3_resolution_coarse: 8
+  h3_resolution_fine: 9
+  use_weather: true
+  weather_max_staleness_min: 90
+  target_encoding_smoothing: 30.0
+  holiday_country: US
+  rush_hour_windows:
+    - [7, 10]
+    - [16, 19]
+
+model:
+  registry_dir: artifacts/models
+  quantiles: [0.5, 0.9]
+  num_leaves: 63
+  learning_rate: 0.05
+  n_estimators: 600
+  min_child_samples: 40
+  subsample: 0.8
+  subsample_freq: 1
+  colsample_bytree: 0.8
+  reg_lambda: 1.0
+  early_stopping_rounds: 50
+  random_state: 17
+  train_fraction: 0.7
+  validation_fraction: 0.15
+  # Refuse to promote a model whose held-out p90 coverage is outside this band: an
+  # ETA that only holds 70% of the time is not a p90, and one that holds 99% is
+  # padded to the point of being useless.
+  promote_coverage_band: [0.86, 0.94]
+  max_residual_abs_s: 3600.0
+
+service:
+  host: 0.0.0.0
+  port: 8080
+  route_timeout_ms: 400
+  model_alias: production
+  reload_interval_s: 300
+  default_handoff_p50_s: 90.0
+  default_handoff_p90_s: 240.0
+  default_prep_p50_s: 600.0
+  default_prep_p90_s: 1020.0
+  component_tail_correlation: 0.35
+  log_feature_hash: true
+
+eval:
+  report_dir: artifacts/eval
+  mape_floor_s: 60.0
+  distance_buckets_m: [1000.0, 3000.0, 8000.0, 20000.0]
+  calibration_quantiles: [0.1, 0.25, 0.5, 0.75, 0.9, 0.95]
+  min_slice_size: 30
+
+data:
+  tlc_dir: data/tlc
+  osm_extract: data/osm/new-york.osm.pbf
+  weather_csv: data/weather/nyc_hourly.csv
+  region_bbox: [40.4774, -74.2591, 40.9176, -73.7004]   # NYC
+  min_trip_duration_s: 60.0
+  max_trip_duration_s: 14400.0
+  min_trip_distance_m: 100.0
+  max_trip_speed_kph: 130.0

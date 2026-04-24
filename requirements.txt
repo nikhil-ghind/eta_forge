@@ -1,0 +1,31 @@
+# ETA Forge — runtime dependencies.
+#
+# Nothing here is imported at module import time: every heavy dependency is pulled in
+# inside the function that uses it, so the package (and the whole test suite) works on
+# a bare interpreter with none of this installed.
+
+# --- configuration & service ---
+PyYAML>=6.0
+fastapi>=0.110
+uvicorn[standard]>=0.29
+pydantic>=2.6
+
+# --- database ---
+psycopg[binary,pool]>=3.1
+
+# --- modelling ---
+lightgbm>=4.3
+pandas>=2.2
+numpy>=1.26
+scikit-learn>=1.4          # only for train/test utilities and metric cross-checks
+
+# --- geospatial ---
+h3>=4.0                    # client-side H3; the database side uses the h3-pg extension
+pyarrow>=15.0              # NYC TLC parquet
+holidays>=0.45             # calendar features
+
+# --- observability ---
+prometheus-client>=0.20
+
+# The road graph is imported with osm2pgrouting, a native binary rather than a Python
+# package. See README "Build the graph" for install instructions.
