@@ -1,0 +1,81 @@
+# ETA Forge — local stack.
+#
+#   docker compose -f deploy/docker-compose.yml up -d db     # database only
+#   docker compose -f deploy/docker-compose.yml up --build   # database + API
+#
+# The database image is postgis/postgis:16-3.4 with pgRouting and h3-pg added at build
+# time (see Dockerfile.postgis) — the upstream PostGIS image ships neither.
+
+name: eta-forge
+
+services:
+  db:
+    build:
+      context: .
+      dockerfile: Dockerfile.postgis
+    image: eta-forge/postgis:16-3.4
+    environment:
+      POSTGRES_DB: eta_forge
+      POSTGRES_USER: eta
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-eta}
+      # The graph import and the profile mining are both large sorts; the defaults
+      # would spill every one of them to disk.
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    command:
+      - postgres
+      - -c
+      - shared_buffers=1GB
+      - -c
+      - work_mem=64MB
+      - -c
+      - maintenance_work_mem=1GB
+      - -c
+      - max_parallel_workers_per_gather=4
+      - -c
+      - random_page_cost=1.1
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ../sql:/migrations:ro
+      - ./initdb.sh:/docker-entrypoint-initdb.d/10-eta-forge.sh:ro
+      # OSM extracts and TLC parquet stay on the host; they are far too large to bake
+      # into an image.
+      - ../data:/data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U eta -d eta_forge"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    shm_size: 1gb
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    image: eta-forge/api:latest
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ETA_FORGE_DATABASE__HOST: db
+      ETA_FORGE_DATABASE__PORT: "5432"
+      ETA_FORGE_DATABASE__USER: eta
+      ETA_FORGE_DATABASE__PASSWORD: ${POSTGRES_PASSWORD:-eta}
+      ETA_FORGE_DATABASE__DATABASE: eta_forge
+      ETA_FORGE_SERVICE__PORT: "8080"
+      ETA_FORGE_MODEL__REGISTRY_DIR: /artifacts/models
+    ports:
+      - "${API_PORT:-8080}:8080"
+    volumes:
+      # Models are produced by an offline training job and mounted read-only; the
+      # serving container never trains and never writes to the registry.
+      - ../artifacts:/artifacts:ro
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request as u; u.urlopen('http://localhost:8080/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:

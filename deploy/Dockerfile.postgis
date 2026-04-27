@@ -1,0 +1,42 @@
+# PostGIS 3.4 on PostgreSQL 16, plus pgRouting, h3-pg and osm2pgrouting.
+#
+# The upstream postgis/postgis image carries neither pgRouting nor h3-pg, and h3-pg
+# has no Debian package, so it is built from source here. osm2pgrouting is installed
+# into the database image on purpose: the import reads a multi-gigabyte extract and
+# writes millions of rows, and doing that over a network link from a separate
+# container is dramatically slower than doing it beside the server.
+
+FROM postgis/postgis:16-3.4
+
+ARG H3_PG_VERSION=v4.1.3
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
+        cmake \
+        git \
+        postgresql-16-pgrouting \
+        postgresql-server-dev-16 \
+        osm2pgrouting \
+        osm2pgsql \
+        libcgal-dev \
+        libboost-graph-dev; \
+    rm -rf /var/lib/apt/lists/*
+
+# h3-pg pulls the H3 core library itself via CMake FetchContent.
+RUN set -eux; \
+    git clone --depth 1 --branch "${H3_PG_VERSION}" \
+        https://github.com/zachasme/h3-pg.git /tmp/h3-pg; \
+    cmake -S /tmp/h3-pg -B /tmp/h3-pg/build -DCMAKE_BUILD_TYPE=Release; \
+    cmake --build /tmp/h3-pg/build --parallel "$(nproc)"; \
+    cmake --install /tmp/h3-pg/build; \
+    rm -rf /tmp/h3-pg
+
+# Build tooling is ~700 MB and is not needed at runtime, but osm2pgrouting is, so the
+# purge is selective.
+RUN set -eux; \
+    apt-get purge -y --auto-remove build-essential cmake git postgresql-server-dev-16; \
+    rm -rf /var/lib/apt/lists/*

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  osm2pgrouting mapping for ETA Forge.
+
+  Only drivable ways are kept: footways, cycleways, steps and paths would make the
+  graph route a car down a staircase. `priority` is osm2pgrouting's routing weight —
+  we set it to 1.0 everywhere because the cost we actually route on is computed at
+  query time from mined speed profiles (see eta_forge/graph/costs.py), not baked in
+  at import. `maxspeed` here is only the fallback when the OSM way carries no
+  `maxspeed` tag; it is stored into segment_attr.speed_limit_kph.
+-->
+<configuration>
+  <tag_name name="highway" id="1">
+    <tag_value name="motorway"       id="101" priority="1.0" maxspeed="90"  />
+    <tag_value name="motorway_link"  id="102" priority="1.0" maxspeed="60"  />
+    <tag_value name="trunk"          id="103" priority="1.0" maxspeed="70"  />
+    <tag_value name="trunk_link"     id="104" priority="1.0" maxspeed="50"  />
+    <tag_value name="primary"        id="105" priority="1.0" maxspeed="50"  />
+    <tag_value name="primary_link"   id="106" priority="1.0" maxspeed="40"  />
+    <tag_value name="secondary"      id="107" priority="1.0" maxspeed="45"  />
+    <tag_value name="secondary_link" id="108" priority="1.0" maxspeed="35"  />
+    <tag_value name="tertiary"       id="109" priority="1.0" maxspeed="40"  />
+    <tag_value name="tertiary_link"  id="110" priority="1.0" maxspeed="30"  />
+    <tag_value name="residential"    id="111" priority="1.0" maxspeed="30"  />
+    <tag_value name="living_street"  id="112" priority="1.0" maxspeed="15"  />
+    <tag_value name="unclassified"   id="113" priority="1.0" maxspeed="30"  />
+    <tag_value name="service"        id="114" priority="1.0" maxspeed="20"  />
+    <tag_value name="road"           id="115" priority="1.0" maxspeed="30"  />
+  </tag_name>
+</configuration>
