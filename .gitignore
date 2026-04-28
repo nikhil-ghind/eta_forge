@@ -1,0 +1,86 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# --- virtual environments ---
+.venv/
+venv/
+env/
+ENV/
+
+# --- test / lint caches ---
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.tox/
+
+# --- secrets and local overrides ---
+.env
+.env.*
+!.env.example
+docker-compose.override.yml
+*.pgpass
+
+# --- model artifacts (produced by scripts/train.py; versioned in the registry, not git) ---
+artifacts/
+models/
+*.lgb
+*.txt.model
+*.booster
+*.joblib
+*.pkl
+*.pickle
+manifest.json
+!eta_forge/**/manifest.json
+
+# --- source data (OSM extracts and TLC parquet are gigabytes; never commit them) ---
+data/
+*.osm
+*.osm.pbf
+*.osm.bz2
+*.pbf
+*.parquet
+*.shp
+*.dbf
+*.shx
+*.prj
+*.geojson
+!configs/*.geojson
+
+# --- database dumps and local cluster state ---
+*.sql.gz
+*.dump
+*.backup
+pgdata/
+postgres-data/
+
+# --- evaluation output ---
+reports/
+*.report.md
+*.report.csv
+eval-*.json
+
+# --- logs ---
+logs/
+*.log
+
+# --- editors and OS ---
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
