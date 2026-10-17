@@ -34,8 +34,9 @@ docker-compose.override.yml
 *.pgpass
 
 # --- model artifacts (produced by scripts/train.py; versioned in the registry, not git) ---
+# Anchored where a bare name would also match a source package (eta_forge/models).
 artifacts/
-models/
+/models/
 *.lgb
 *.txt.model
 *.booster
@@ -65,6 +66,10 @@ manifest.json
 *.backup
 pgdata/
 postgres-data/
+
+# --- registry staging and alias temp files left by an interrupted write ---
+.staging-*/
+*.aliases.tmp
 
 # --- evaluation output ---
 reports/
