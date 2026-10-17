@@ -13,7 +13,9 @@ them while choosing.
 
 Three fallbacks are stacked, cheapest first:
 
-1. the smoothed profile cell for this (segment, dow, tod), when mining produced one;
+1. the smoothed profile cell for this (segment, dow, tod), when it rests on enough
+   evidence — observed traversals plus whatever the shrinkage borrowed from adjacent
+   hours on the same segment (``effective_sample_count``);
 2. the segment's OSM ``maxspeed``, damped, when it has one;
 3. the highway-class default.
 
@@ -154,7 +156,7 @@ def build_cost_sql(
                ON p.segment_id = a.segment_id
               AND p.dow_bucket = {int(dow_bucket)}
               AND p.tod_bucket = {int(tod_bucket)}
-              AND p.sample_count >= {int(profiles.min_samples_per_cell)}"""
+              AND p.effective_sample_count >= {int(profiles.min_samples_per_cell)}"""
     else:
         speed_expr = f"""COALESCE(
             a.speed_limit_kph * {damping},
@@ -282,7 +284,7 @@ PROFILE_COVERAGE_SQL_TEMPLATE = """
            ON p.segment_id = s.segment_id
           AND p.dow_bucket = %s
           AND p.tod_bucket = %s
-          AND p.sample_count >= %s
+          AND p.effective_sample_count >= %s
 """
 
 
