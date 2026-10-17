@@ -46,7 +46,7 @@ manifest.json
 !eta_forge/**/manifest.json
 
 # --- source data (OSM extracts and TLC parquet are gigabytes; never commit them) ---
-data/
+/data/
 *.osm
 *.osm.pbf
 *.osm.bz2
