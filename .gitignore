@@ -75,7 +75,9 @@ postgres-data/
 reports/
 *.report.md
 *.report.csv
+*.summary.json
 eval-*.json
+eta-forge-smoke-*/
 
 # --- logs ---
 logs/
