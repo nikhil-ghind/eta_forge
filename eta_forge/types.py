@@ -439,6 +439,49 @@ class SegmentObservation:
         }
 
 
+@dataclass(frozen=True)
+class PrepObservation:
+    """One historical order's merchant preparation time.
+
+    ``prep_is_upper_bound`` marks orders where the merchant never confirmed readiness
+    and prep was inferred from courier pickup, which includes courier wait.
+    """
+
+    order_id: str
+    merchant_id: str
+    placed_at: datetime
+    prep_s: float
+    cuisine_category: str = "other"
+    item_count: int = 1
+    order_value_usd: Optional[float] = None
+    open_orders_at_merchant: Optional[int] = None
+    prep_is_upper_bound: bool = False
+
+    def __post_init__(self) -> None:
+        if self.placed_at.tzinfo is None:
+            raise ValidationError("placed_at must be timezone-aware")
+        if self.prep_s <= 0:
+            raise ValidationError("prep_s must be > 0")
+        if self.item_count < 0:
+            raise ValidationError("item_count must be >= 0")
+
+
+@dataclass(frozen=True)
+class DwellObservation:
+    """Handoff dwell at a destination: arrival at the kerb to order handed over."""
+
+    order_id: str
+    destination_cell: str
+    arrived_at: datetime
+    dwell_s: float
+
+    def __post_init__(self) -> None:
+        if self.arrived_at.tzinfo is None:
+            raise ValidationError("arrived_at must be timezone-aware")
+        if self.dwell_s < 0:
+            raise ValidationError("dwell_s must be >= 0")
+
+
 # --------------------------------------------------------------------------------------
 # service request / response
 # --------------------------------------------------------------------------------------
@@ -666,6 +709,8 @@ __all__ = [
     "TripRecord",
     "GpsPoint",
     "SegmentObservation",
+    "PrepObservation",
+    "DwellObservation",
     "WeatherObservation",
     "EtaRequest",
     "QuantilePair",
