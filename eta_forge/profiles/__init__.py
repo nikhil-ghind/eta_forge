@@ -18,7 +18,7 @@ Three things are easy to get wrong here, and each has its own module:
 from .buckets import BucketSpec, bucket_of, bucket_label, iter_cells
 from .mining import CellStats, SegmentProfile, mine_profiles, harmonic_mean_speed
 from .shrinkage import PriorHierarchy, shrink_cell, shrink_profiles
-from .store import ProfileStore
+from .store import ProfileBuild, ProfileStore, build_profiles
 
 __all__ = [
     "BucketSpec",
@@ -33,4 +33,6 @@ __all__ = [
     "shrink_cell",
     "shrink_profiles",
     "ProfileStore",
+    "ProfileBuild",
+    "build_profiles",
 ]
