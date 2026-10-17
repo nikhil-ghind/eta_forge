@@ -95,6 +95,12 @@ model:
   # padded to the point of being useless.
   promote_coverage_band: [0.86, 0.94]
   max_residual_abs_s: 3600.0
+  backend: auto            # lightgbm | stumps (pure Python) | auto
+  stump_rounds: 150
+  stump_learning_rate: 0.1
+  prep_shrink_k: 25.0
+  dwell_shrink_k: 40.0
+  min_travel_fraction: 0.3
 
 service:
   host: 0.0.0.0

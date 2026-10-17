@@ -191,8 +191,27 @@ class ModelConfig:
     # A candidate whose held-out p90 coverage falls outside this band is not promoted.
     promote_coverage_band: List[float] = field(default_factory=lambda: [0.86, 0.94])
     max_residual_abs_s: float = 3_600.0
+    # "lightgbm" for real training, "stumps" for the pure-Python booster that lets the
+    # synthetic pipeline run on a bare interpreter, "auto" to prefer LightGBM if present.
+    backend: str = "auto"
+    stump_rounds: int = 150
+    stump_learning_rate: float = 0.1
+    # Credibility k for the merchant prep and destination-cell dwell priors.
+    prep_shrink_k: float = 25.0
+    dwell_shrink_k: float = 40.0
+    # Predicted travel never drops below this fraction of the baseline, whatever the
+    # residual model says: a correction that halves a physical lower bound is a bug.
+    min_travel_fraction: float = 0.3
 
     def validate(self) -> None:
+        if self.backend not in ("auto", "lightgbm", "stumps"):
+            raise ConfigError("model.backend must be auto, lightgbm or stumps")
+        if self.stump_rounds < 1 or not 0.0 < self.stump_learning_rate <= 1.0:
+            raise ConfigError("model.stump_rounds >= 1 and 0 < stump_learning_rate <= 1")
+        if self.prep_shrink_k <= 0 or self.dwell_shrink_k <= 0:
+            raise ConfigError("model prep/dwell shrink k must be > 0")
+        if not 0.0 <= self.min_travel_fraction < 1.0:
+            raise ConfigError("model.min_travel_fraction must be in [0, 1)")
         if not self.quantiles:
             raise ConfigError("model.quantiles must not be empty")
         for q in self.quantiles:
@@ -200,6 +219,8 @@ class ModelConfig:
                 raise ConfigError(f"model.quantiles entry {q} must be in (0, 1)")
         if sorted(self.quantiles) != list(self.quantiles):
             raise ConfigError("model.quantiles must be given in ascending order")
+        if 0.5 not in self.quantiles:
+            raise ConfigError("model.quantiles must include 0.5 (the served point estimate)")
         if self.train_fraction <= 0 or self.validation_fraction <= 0:
             raise ConfigError("model split fractions must be > 0")
         if self.train_fraction + self.validation_fraction >= 1.0:
